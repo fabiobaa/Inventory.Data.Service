@@ -2,7 +2,7 @@
 
 namespace Inventory.Data.Service.DTOs
 {
-    public class SaleRequestDto
+    public class Sale
     {
         [Required]
         public string TransactionId { get; set; } = string.Empty;

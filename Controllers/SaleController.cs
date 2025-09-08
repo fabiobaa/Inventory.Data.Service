@@ -18,7 +18,7 @@ namespace Inventory.Data.Service.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> RecordSale([FromBody] SaleRequestDto saleRequest)
+        public async Task<IActionResult> RecordSale([FromBody] Sale saleRequest)
         {
             if (!ModelState.IsValid)
             {
