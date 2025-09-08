@@ -6,7 +6,8 @@ Este proyecto es un prototipo de backend para un **sistema de gestión de invent
 El objetivo de este prototipo es demostrar una arquitectura moderna que optimiza la **consistencia del inventario**, reduce la **latencia de actualización** y sienta las bases para un sistema robusto, escalable y observable.
 
 ## 2. Decisiones Clave de Arquitectura
-* **Arquitectura Orientada a Eventos (EDA)**: El núcleo del sistema es un flujo asíncrono. Las transacciones (como las ventas) se registran como eventos en una cola (simulada con una tabla de base de datos) y son procesadas por un servicio en segundo plano.
+* **Arquitectura Orientada a Eventos (EDA)**: El núcleo del sistema es un flujo asíncrono. Las transacciones (como las ventas) se registran como eventos en una cola y son procesadas por un servicio en segundo plano.
+* Justificación de la Cola Simulada: Para el manejo de la comunicación asíncrona, se consideraron herramientas estándar de la industria como RabbitMQ y Azure Service Bus. Para los fines de este prototipo, se optó por un enfoque simplificado utilizando una tabla de la base de datos como una cola de eventos. Esta decisión mantiene el prototipo autocontenido y sin dependencias externas, facilitando su ejecución, pero siguiendo el mismo patrón arquitectónico productor/consumidor de un message broker dedicado.
 * **Manejo de Errores Global con Middleware**: Un middleware (`ErrorHandlerMiddleware`) atrapa todas las excepciones no controladas de la API, las registra y las devuelve en un formato JSON estandarizado.
 * **Separación de Responsabilidades (SoC)**: La API se divide en controladores especializados con responsabilidades únicas:
     * `ProductController`: Gestiona el catálogo maestro de productos y el inventario.
@@ -28,13 +29,13 @@ El objetivo de este prototipo es demostrar una arquitectura moderna que optimiza
 ### `StoreController` (`/api/stores`)
 | Verbo  | Ruta | Descripción                             |
 |--------|------|-----------------------------------------|
-| `POST` | `/`  | Crea una o más tiendas en el catálogo.  |
+| `POST` | `/bulk-load`  | Crea una o más tiendas en el catálogo.  |
 | `GET`  | `/`  | Obtiene la lista de todas las tiendas.  |
 
 ### `ProductController` (`/api/products`)
 | Verbo  | Ruta          | Descripción                                                |
 |--------|---------------|------------------------------------------------------------|
-| `POST` | `/`    | Crea uno o más productos en el catálogo maestro.           |
+| `POST` | `/bulk-load`    | Crea uno o más productos en el catálogo maestro.           |
 | `GET`  | `/`    | Obtiene la lista de todos los productos del catálogo.      |
 
 ### `InventoryController` (`/api/inventory`)
@@ -44,7 +45,7 @@ El objetivo de este prototipo es demostrar una arquitectura moderna que optimiza
 | `GET`  | `/`           | Busca en el inventario con filtros opcionales.             |
 
 
-### `SalesController` (`/api/sales`)
+### `SaleController` (`/api/sales`)
 | Verbo  | Ruta | Descripción                                     |
 |--------|------|-------------------------------------------------|
 | `POST` | `/`  | Registra un evento de venta en la cola.         |

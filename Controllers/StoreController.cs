@@ -19,7 +19,7 @@ namespace Inventory.Data.Service.Controllers
             _context = context;
         }
 
-        [HttpPost]
+        [HttpPost("bulk-load")]
         public async Task<IActionResult> CreateStore(
             [FromBody] List<Store> newStores, 
             [FromServices] CreateStoresRequestValidator validador)

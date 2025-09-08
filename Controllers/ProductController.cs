@@ -19,7 +19,7 @@ namespace Inventory.Data.Service.Controllers
             _context = context;
         }
 
-        [HttpPost("catalog")]
+        [HttpPost("bulk-load")]
         public async Task<IActionResult> CreateProductInCatalog(
             [FromBody] List<Product> newProducts,
             [FromServices] CreateProductsRequestValidator validador)
@@ -36,7 +36,7 @@ namespace Inventory.Data.Service.Controllers
             return Ok(ApiResult<object>.Ok(newProducts, "Producto creado en el catálogo exitosamente."));
         }
 
-        [HttpGet("catalog")]
+        [HttpGet]
         public async Task<IActionResult> GetProductCatalog()
         {
             var catalog = await _context.Products.OrderBy(p => p.Name).ToListAsync();
