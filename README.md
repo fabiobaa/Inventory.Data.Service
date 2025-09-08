@@ -58,3 +58,9 @@ El objetivo de este prototipo es demostrar una arquitectura moderna que optimiza
 | Verbo  | Ruta        | Descripción                                     |
 |--------|-------------|-------------------------------------------------|
 | `GET`  | `/summary`  | Obtiene un resumen macro con KPIs del sistema.  |
+
+
+## 5. Despliegue y Código Fuente
+
+* **Código Fuente en GitHub:** [https://github.com/fabiobaa/Inventory.Data.Service](https://github.com/fabiobaa/Inventory.Data.Service)
+* **API Desplegada en Azure (Swagger UI):** [https://test-pub-service-mana-inventory-djazchbed9bfe7h8.canadacentral-01.azurewebsites.net/swagger/index.html](https://test-pub-service-mana-inventory-djazchbed9bfe7h8.canadacentral-01.azurewebsites.net/swagger/index.html)
