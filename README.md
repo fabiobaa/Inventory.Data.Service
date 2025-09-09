@@ -43,11 +43,10 @@ El objetivo de este prototipo es demostrar una arquitectura moderna que optimiza
 | `POST` | `/bulk-load`  | Carga o actualiza masivamente el inventario.               |
 | `GET`  | `/`           | Busca en el inventario con filtros opcionales.             |
 
-
 ### `SaleController` (`/api/sales`)
 | Verbo  | Ruta | Descripción                                     |
 |--------|------|-------------------------------------------------|
-| `POST` | `/`  | Registra un evento de venta en la cola.         |
+| `POST` | `/bulk-load`  | Registra un evento de venta en la cola.         |
 
 ### `QueueController` (`/api/queue`)
 | Verbo  | Ruta        | Descripción                                     |

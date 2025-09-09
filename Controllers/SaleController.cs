@@ -3,6 +3,9 @@ using Inventory.Data.Service.Data;
 using Inventory.Data.Service.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
+using Inventory.Data.Service.Validators;
+using Inventory.Data.Service.Shared;
+using AutoMapper;
 
 namespace Inventory.Data.Service.Controllers
 {
@@ -11,42 +14,37 @@ namespace Inventory.Data.Service.Controllers
     public class SaleController : ControllerBase
     {
         private readonly InventoryDbContext _context;
+        private readonly IMapper _mapper;
 
-        public SaleController(InventoryDbContext context)
+        public SaleController(InventoryDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
-        [HttpPost]
-        public async Task<IActionResult> RecordSale([FromBody] Sale saleRequest)
+        // <summary>
+        /// Registra una nueva venta en el sistema de forma asíncrona
+        /// </summary>
+        /// <param name="sale">Datos de la venta a registrar</param>
+        /// <param name="validator">Validador para la solicitud de venta</param>
+        /// <returns>ID del mensaje en cola y del evento generado</returns>
+        [HttpPost("bulk-load")]
+        public async Task<IActionResult> RecordSale([FromBody] List<Sale> sales, [FromServices] SaleValidator validator)
         {
-            if (!ModelState.IsValid)
+            var validationResult = await validator.ValidateAsync(sales);
+            if (!validationResult.IsValid)
             {
-                return BadRequest(ModelState);
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage);
+                return BadRequest(ApiResult<object>.Fail(errors, "Validación de datos fallida"));
             }
 
-            var saleEvent = new SaleOccurredEvent
-            {
-                EventId = Guid.NewGuid(),
-                OccurredAt = DateTime.UtcNow,
-                TransactionId = saleRequest.TransactionId,
-                ProductId = saleRequest.ProductId,
-                StoreId = saleRequest.StoreId,
-                QuantitySold = saleRequest.QuantitySold
-            };
+            var salesevents = _mapper.Map<List<SaleOccurredEvent>>(sales);
+            var queues = _mapper.Map<List<QueuedMessageModel>>(salesevents);
 
-            var message = new QueuedMessage
-            {
-                Id = Guid.NewGuid(),
-                Payload = JsonSerializer.Serialize(saleEvent),
-                Status = "Pendiente",
-                CreatedAt = DateTime.UtcNow
-            };
-
-            await _context.QueuedMessages.AddAsync(message);
+            await _context.QueuedMessages.AddRangeAsync(queues);
             await _context.SaveChangesAsync();
 
-            return Accepted(new { messageId = message.Id, eventId = saleEvent.EventId });
+            return Accepted();
         }
     }
 }

@@ -5,28 +5,43 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Inventory.Data.Service.Validators
 {
-    public class BulkLoadValidator : AbstractValidator<List<InventoryProducts>>
+    public class InventaryValidator : AbstractValidator<List<DTOs.Inventory>>
     {
         private readonly InventoryDbContext _context;
-        public BulkLoadValidator(InventoryDbContext context)
-        {
 
+        public InventaryValidator(InventoryDbContext context)
+        {
             _context = context;
+
             RuleFor(list => list)
-                .NotEmpty().WithMessage("La lista de productos no puede estar vacía.")
+                .NotEmpty().WithMessage("La lista de inventario no puede estar vacía.")
                 .CustomAsync(async (list, validationContext, cancellationToken) =>
                 {
-                    // 1. Hacemos UNA SOLA consulta para obtener todos los IDs de productos válidos.
+                    // 1. Obtener todos los IDs válidos de productos y tiendas en UNA sola consulta por tabla.
                     var validProductIds = await _context.Products
+                        .AsNoTracking()
                         .Select(p => p.ProductId)
                         .ToHashSetAsync(cancellationToken);
 
-                    // 2. Hacemos UNA SOLA consulta para obtener todos los IDs de tiendas válidas.
                     var validStoreIds = await _context.Stores
+                        .AsNoTracking()
                         .Select(s => s.StoreId)
                         .ToHashSetAsync(cancellationToken);
 
-                    // 3. Validamos cada item de la lista en memoria (muy rápido).
+                    // 2. Detectar duplicados en memoria (StoreId + ProductId combinados).
+                    var duplicados = list
+                        .GroupBy(i => new { i.StoreId, i.ProductId })
+                        .Where(g => g.Count() > 1)
+                        .Select(g => $"StoreId={g.Key.StoreId}, ProductId={g.Key.ProductId}")
+                        .ToList();
+
+                    if (duplicados.Count != 0)
+                    {
+                        validationContext.AddFailure(
+                            $"Existen registros duplicados en la lista: {string.Join(" | ", duplicados)}");
+                    }
+
+                    // 3. Validaciones individuales por item en memoria.
                     foreach (var item in list)
                     {
                         if (!validProductIds.Contains(item.ProductId))
@@ -46,8 +61,8 @@ namespace Inventory.Data.Service.Validators
                         if (item.Quantity < 0)
                         {
                             validationContext.AddFailure(
-                               nameof(item.Quantity),
-                               $"La cantidad para el producto '{item.ProductId}' no puede ser negativa.");
+                                nameof(item.Quantity),
+                                $"La cantidad para el producto '{item.ProductId}' no puede ser negativa.");
                         }
                     }
                 });

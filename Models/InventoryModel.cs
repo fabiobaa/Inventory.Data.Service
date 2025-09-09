@@ -6,16 +6,12 @@ namespace Inventory.Data.Service.Models
     /// <summary>
     /// Representa un ítem de inventario en una tienda específica.
     /// </summary>
-    public class InventoryProducts
+    public class InventoryModel
     {
-
-        [Required]
+        [Key]
         public string ProductId { get; set; } = string.Empty;
-
-        [Required]
+        [Key]
         public string StoreId { get; set; } = string.Empty;
-
-        [Range(0, int.MaxValue, ErrorMessage = "La cantidad no puede ser negativa.")]
         public int Quantity { get; set; }
 
         /// <summary>

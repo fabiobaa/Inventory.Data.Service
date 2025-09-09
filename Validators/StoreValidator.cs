@@ -1,6 +1,6 @@
 ﻿using FluentValidation;
 using Inventory.Data.Service.Data;
-using Inventory.Data.Service.Models;
+using Inventory.Data.Service.DTOs;
 using Microsoft.EntityFrameworkCore;
 
 namespace Inventory.Data.Service.Validators
@@ -9,8 +9,28 @@ namespace Inventory.Data.Service.Validators
     {
         public CreateStoresRequestValidator(InventoryDbContext context)
         {
+            // Regla 1: La lista en sí no puede estar vacía.
             RuleFor(list => list)
                 .NotEmpty().WithMessage("La lista de tiendas no puede estar vacía.");
+
+            // Regla 2: Detectar y mostrar duplicados de StoreId dentro de la lista.
+            RuleFor(list => list)
+                .Custom((list, contextValidation) =>
+                {
+                    var duplicados = list
+                        .GroupBy(s => s.StoreId)
+                        .Where(g => g.Count() > 1)
+                        .Select(g => g.Key)
+                        .ToList();
+
+                    if (duplicados.Any())
+                    {
+                        contextValidation.AddFailure(
+                            $"Las siguientes StoreId están duplicadas en la lista: {string.Join(", ", duplicados)}"
+                        );
+                    }
+                });
+            // Regla 3: Aplica el validador de tienda individual a CADA elemento de la lista.
 
             RuleForEach(list => list)
                 .SetValidator(new StoreValidator(context));

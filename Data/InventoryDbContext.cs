@@ -13,15 +13,14 @@ namespace Inventory.Data.Service.Data
         {
         }
 
-        // Representa la tabla 'InventoryProducts' en la base de datos.
-        public DbSet<InventoryProducts> InventoryProducts { get; set; }
-
+        // Representa la tabla 'Inventory'Inventario.
+        public DbSet<InventoryModel> Inventory { get; set; }
         // Representa la tabla 'QueuedMessages', que actúa como nuestra cola de eventos.
-        public DbSet<QueuedMessage> QueuedMessages { get; set; }
-
-        public DbSet<Product> Products { get; set; }
-
-        public DbSet<Store> Stores { get; set; }
+        public DbSet<QueuedMessageModel> QueuedMessages { get; set; }
+        // Representa la tabla 'Products', Productos.
+        public DbSet<ProductModel> Products { get; set; }
+        // Representa la tabla 'Stores', Tiendas.
+        public DbSet<StoreModel> Stores { get; set; }
 
 
 
@@ -30,7 +29,7 @@ namespace Inventory.Data.Service.Data
         {
             // Aquí definimos que la tabla 'InventoryProducts' tiene una clave
             // primaria compuesta por ProductId y StoreId.
-            modelBuilder.Entity<InventoryProducts>()
+            modelBuilder.Entity<InventoryModel>()
                 .HasKey(item => new { item.ProductId, item.StoreId });
         }
 

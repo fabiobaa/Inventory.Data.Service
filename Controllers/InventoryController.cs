@@ -1,4 +1,5 @@
-﻿using Inventory.Data.Service.Data;
+﻿using AutoMapper;
+using Inventory.Data.Service.Data;
 using Inventory.Data.Service.DTOs;
 using Inventory.Data.Service.Models;
 using Inventory.Data.Service.Shared;
@@ -13,42 +14,45 @@ namespace Inventory.Data.Service.Controllers
     public class InventoryController : Controller
     {
         private readonly InventoryDbContext _context;
+        private readonly IMapper _mapper;
 
-        public InventoryController(InventoryDbContext context)
+
+        public InventoryController(InventoryDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
+
         }
 
-
+        /// <summary>
+        /// Consulta inventario 
+        /// </summary>
+        /// <param name="validator"></param>
+        /// <param name="query"></param>
+        /// <returns></returns>
         [HttpGet]
         public async Task<IActionResult> FindInventoryProducts(
-            [FromServices] FindProductsQueryValidator validador,
-            [FromQuery] string? storeId = null, [FromQuery] string? productId = null)
+            [FromServices] FindProductsQueryValidator validator,
+            [FromQuery] FindProductsQuery findProductsQuery)
         {
 
-            // 1. Validación FluentValidation
-            var validationResult = validador.Validate(new FindProductsQuery
-            {
-                ProductId = productId,
-                StoreId = storeId
-            });
+            var validationResult = await validator.ValidateAsync(findProductsQuery);
             if (!validationResult.IsValid)
             {
-                var errores = validationResult.Errors.Select(e => e.ErrorMessage);
-                return BadRequest(ApiResult<object>.Fail(errores, "Validación de datos fallida"));
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage);
+                return BadRequest(ApiResult<object>.Fail(errors, "Validación de datos fallida"));
             }
 
+            var query = _context.Inventory.AsQueryable();
 
-            var query = _context.InventoryProducts.AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(storeId))
+            if (!string.IsNullOrWhiteSpace(findProductsQuery.StoreId))
             {
-                query = query.Where(item => item.StoreId.ToLower() == storeId.ToLower());
+                query = query.Where(item => item.StoreId.ToLower() == findProductsQuery.StoreId.ToLower());
             }
 
-            if (!string.IsNullOrWhiteSpace(productId))
+            if (!string.IsNullOrWhiteSpace(findProductsQuery.ProductId))
             {
-                query = query.Where(item => item.ProductId.ToLower() == productId.ToLower());
+                query = query.Where(item => item.ProductId.ToLower() == findProductsQuery.ProductId.ToLower());
             }
 
             var result = await query.ToListAsync();
@@ -62,11 +66,17 @@ namespace Inventory.Data.Service.Controllers
            ));
         }
 
-        [HttpPost("bulk-load")]
 
+        // <summary>
+        /// Carga masiva de inventario
+        /// </summary>
+        /// <param name="inventory">Lista de productos de inventario a cargar</param>
+        /// <param name="validator">Validador para la carga masiva</param>
+        /// <returns>Resultado de la operación</returns>
+        [HttpPost("bulk-load")]
         public async Task<IActionResult> BulkLoadInventory(
-            [FromBody] List<InventoryProducts> inventory,
-            [FromServices] BulkLoadValidator validador
+            [FromBody] List<DTOs.Inventory> inventory,
+            [FromServices] InventaryValidator validador
             )
         {
 
@@ -77,7 +87,7 @@ namespace Inventory.Data.Service.Controllers
                 return BadRequest(ApiResult<object>.Fail(errores, "Validación de datos fallida"));
             }
 
-            var existingProducts = await _context.InventoryProducts
+            var existingProducts = await _context.Inventory
                 .Where(dbProduct => inventory.Select(product => product.ProductId).Contains(dbProduct.ProductId) &&
                                  inventory.Select(item => item.StoreId).Contains(dbProduct.StoreId))
                 .ToDictionaryAsync(i => $"{i.StoreId}-{i.ProductId}");
@@ -92,8 +102,15 @@ namespace Inventory.Data.Service.Controllers
                 }
                 else
                 {
-                    _context.InventoryProducts.Add(item);
-                    existingProducts.Add(key, item);
+                    var data = new InventoryModel()
+                    {
+                        ProductId = item.ProductId,
+                        Quantity = item.Quantity,
+                        StoreId = item.StoreId
+
+                    };
+                    _context.Inventory.Add(_mapper.Map<InventoryModel>(item));
+                    existingProducts.Add(key, data);
                 }
             }
 

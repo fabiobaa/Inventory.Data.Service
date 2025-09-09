@@ -2,7 +2,7 @@
 
 namespace Inventory.Data.Service.Models
 {
-    public class Store
+    public class StoreModel
     {
         [Key]
         public string StoreId { get; set; } = string.Empty;

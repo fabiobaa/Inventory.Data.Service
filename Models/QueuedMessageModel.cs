@@ -2,22 +2,14 @@
 
 namespace Inventory.Data.Service.Models
 {
-    public class QueuedMessage
+    public class QueuedMessageModel
     {
         [Key]
         public Guid Id { get; set; }
-
-        [Required]
         public string Payload { get; set; } = string.Empty;
-
-        [Required]
-        [MaxLength(20)]
         public string Status { get; set; } = MessageStatus.Pendiente;
-
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
         public DateTime? ProcessedAt { get; set; }
-
         public string ErrorMessage { get; set; } = string.Empty;
     }
 

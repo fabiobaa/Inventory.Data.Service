@@ -1,4 +1,6 @@
-﻿using Inventory.Data.Service.Data;
+﻿using AutoMapper;
+using Inventory.Data.Service.Data;
+using Inventory.Data.Service.DTOs;
 using Inventory.Data.Service.Models;
 using Inventory.Data.Service.Shared;
 using Inventory.Data.Service.Validators;
@@ -13,12 +15,21 @@ namespace Inventory.Data.Service.Controllers
     public class ProductController : ControllerBase
     {
         private readonly InventoryDbContext _context;
+        private readonly IMapper _mapper;
 
-        public ProductController(InventoryDbContext context)
+
+        public ProductController(InventoryDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
+        /// <summary>
+        /// Crea uno o muchos productos
+        /// </summary>
+        /// <param name="newProducts"></param>
+        /// <param name="validador"></param>
+        /// <returns></returns>
         [HttpPost("bulk-load")]
         public async Task<IActionResult> CreateProductInCatalog(
             [FromBody] List<Product> newProducts,
@@ -31,11 +42,16 @@ namespace Inventory.Data.Service.Controllers
                 return BadRequest(ApiResult<object>.Fail(errores, "Validación de datos fallida"));
             }
 
-            await _context.Products.AddRangeAsync(newProducts);
+         
+        await _context.Products.AddRangeAsync(_mapper.Map<List<ProductModel>>(newProducts));
             await _context.SaveChangesAsync();
             return Ok(ApiResult<object>.Ok(newProducts, "Producto creado en el catálogo exitosamente."));
         }
 
+        /// <summary>
+        /// Consulta toda la lista de productos
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         public async Task<IActionResult> GetProductCatalog()
         {

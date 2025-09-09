@@ -59,7 +59,7 @@ namespace Inventory.Data.Service
                 if (saleEvent is not null)
                 {
 
-                    var inventoryItem = await dbContext.InventoryProducts
+                    var inventoryItem = await dbContext.Inventory
                         .FirstOrDefaultAsync(i => i.ProductId == saleEvent.ProductId && i.StoreId == saleEvent.StoreId, stoppingToken);
 
                     if (inventoryItem != null && inventoryItem.Quantity >= saleEvent.QuantitySold)

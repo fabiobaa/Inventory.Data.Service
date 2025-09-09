@@ -1,5 +1,6 @@
 ﻿using FluentValidation;
 using Inventory.Data.Service.Data;
+using Inventory.Data.Service.DTOs;
 using Inventory.Data.Service.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,7 +14,25 @@ namespace Inventory.Data.Service.Validators
             RuleFor(list => list)
                 .NotEmpty().WithMessage("La lista de productos no puede estar vacía.");
 
-            // Regla 2: Aplica el validador de producto individual a CADA elemento de la lista.
+            // Regla 2: No permitir ProductId duplicados dentro de la lista.
+            RuleFor(list => list)
+           .Custom((list, contextValidation) =>
+           {
+               var duplicados = list
+                   .GroupBy(p => p.ProductId)
+                   .Where(g => g.Count() > 1)
+                   .Select(g => g.Key)
+                   .ToList();
+
+               if (duplicados.Any())
+               {
+                   contextValidation.AddFailure(
+                       $"Los siguientes ProductId están duplicados en la lista: {string.Join(", ", duplicados)}"
+                   );
+               }
+           });
+
+            // Regla 3: Aplica el validador de producto individual a CADA elemento de la lista.
             RuleForEach(list => list)
                 .SetValidator(new ProductValidator(context));
         }

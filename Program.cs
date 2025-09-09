@@ -3,6 +3,9 @@ using Inventory.Data.Service.Middleware;
 using Microsoft.EntityFrameworkCore;
 using FluentValidation;
 using Inventory.Data.Service;
+using Inventory.Data.Service.Mappings;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,24 +27,17 @@ builder.Services.AddHostedService<QueueProcessorService>();
 
 // Configuración de FluentValidation
 builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
+builder.Services.AddAutoMapper(typeof(MappingProfile));
 
-
-// Añade los servicios para los controladores de la API.
-builder.Services.AddControllers();
 
 var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment())
-//{
-   
-//}
-
 
 app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseMiddleware<ErrorHandlerMiddleware>();
+app.UseMiddleware<PerformanceMetricsMiddleware>();
+
 
 app.UseHttpsRedirection();
 
